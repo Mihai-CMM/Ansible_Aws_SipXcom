@@ -1,0 +1,78 @@
+---
+- hosts: localhost
+  connection: local
+  remote_user: devops
+  gather_facts: no
+  vars_files:
+  - files/awscreds.yml
+  - files/info_hosted.yml
+  tasks:
+  - name: Basic provisioning of EC2 instance
+    ec2:
+      aws_access_key: "{{ aws_id }}"
+      aws_secret_key: "{{ aws_key }}"
+      region: "{{ aws_region }}"
+      image: "{{ sipxcom_ami }}"
+      instance_type: "{{ free_instance }}"
+      key_name: "{{ ssh_keyname }}"
+      count: 1
+      state: present
+      group_id: "{{ secgroup_id }}"
+      wait: yes
+      vpc_subnet_id: subnet-29a32841
+      assign_public_ip: yes
+      instance_tags:
+        Name: uc1.mihai.ezuce.ro
+    register: ec2info
+  - name: Print the results
+    debug: var=ec2info 
+  - name: Add all instance public IPs to host group
+    add_host: hostname={{ ec2info.instances[0].public_ip  }} 
+              groups=ec2hosts
+              ansible_ssh_private_key_file=~/.ssh/devops-key.pem
+
+              
+  - name: Add Route 53 entries for newly created EC2 Instance 
+    route53:
+      command: create
+      zone: ezuce.ro
+      overwrite: yes
+      record: "{{ net_host }}.{{ net_domain }}"
+      type: A
+      ttl: 7200
+      value: "{{ ec2info.instances[0].public_ip }}"
+              
+  - name: Add TCP SIP  SRV 
+    route53:
+      command: create
+      zone: ezuce.ro
+      overwrite: yes
+      record: "_sip._tcp.{{ net_domain }}."
+      type: SRV
+      value: "10 10 5060 {{ net_host }}.{{ net_domain }}"
+     
+              
+  - name: Add UDP SIP  SRV 
+    route53:
+      command: create
+      zone: ezuce.ro
+      record: "_sip._udp.{{ net_domain }}."
+      type: SRV
+      value: "10 10 5060 {{ net_host }}.{{ net_domain }}"
+  
+  - name: Wait for SSH to come up
+    remote_user: root
+    wait_for: host={{ ec2info.instances[0].public_ip  }} port=22 delay=10 timeout=320 state=started
+
+
+- hosts: ec2hosts
+  vars_files:
+      - files/awscreds.yml
+      - files/info_hosted.yml
+  tasks:
+  - name: Configure sipxcom
+    remote_user: root
+    shell: sipxecs-setup --noui --sip_domain "{{ sip_domain }}" --sip_realm "{{ sip_realm }}" --net_domain "{{ net_domain }}" --net_host "{{ net_host }}"
+         
+
+

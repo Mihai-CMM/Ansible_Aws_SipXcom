@@ -1,0 +1,13 @@
+standard_ami: ami-edb9069e 
+sipxcom_ami: ami-6b156a18
+tiny_instance: t1.micro
+free_instance: t2.micro
+large_instance: m4.large
+ssh_keyname: devops-key
+inst_id: i-5fc6256e
+template_id:
+secgroup_id: *****
+sip_domain: mihai.test
+sip_realm: mihai.test
+net_domain: mihai.test
+net_host: uc1

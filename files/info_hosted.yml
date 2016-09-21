@@ -1,0 +1,14 @@
+standard_ami: ami-edb9069e 
+sipxcom_ami: ami-6b156a18
+tiny_instance: t1.micro
+free_instance: t2.micro
+large_instance: m4.large
+ssh_keyname: devops-key
+inst_id: i-8b3a21b5
+template_id:
+secgroup_id: ****
+sip_domain: mihai.ezuce.ro
+sip_realm: mihai.ezuce.ro
+net_domain: mihai.ezuce.ro
+net_host: uc1
+SRV_FQDN: 10 10 5060 uc1.mihai.ezuce.ro

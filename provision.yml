@@ -1,0 +1,30 @@
+---
+- hosts: localhost
+  connection: local
+  remote_user: devops
+#  become: yes
+  gather_facts: no
+  vars_files:
+  - files/awscreds.yml
+  - files/info.yml
+  tasks:
+  - name: Basic provisioning of EC2 instance
+    ec2:
+      aws_access_key: "{{ aws_id }}"
+      aws_secret_key: "{{ aws_key }}"
+      region: "{{ aws_region }}"
+      image: "{{ sipxcom_ami }}"
+      instance_type: "{{ large_instance }}"
+      key_name: "{{ ssh_keyname }}"
+      count: 1
+      state: present
+      group_id: "{{ secgroup_id }}"
+      wait: no
+      vpc_subnet_id: subnet-29a32841
+      assign_public_ip: yes
+      instance_tags:
+        Name: centOS_template
+    register: ec2info
+  - name: Print the results
+    debug: var=ec2info
+        

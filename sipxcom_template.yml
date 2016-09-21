@@ -1,0 +1,34 @@
+---
+- hosts: aws
+  remote_user: root
+  gather_facts: yes
+  connection: ssh
+  tasks:
+    - name: Copy sipxcom.repo in /etc/yum.repos.d
+      copy: src=files/sipxcom.repo dest=/etc/yum.repos.d/sipxcom.repo
+    - name: Installing sipxcom. Go get a coffee. It will take a while
+      yum:  name=sipxcom state=present
+
+- hosts: localhost
+  connection: local
+  remote_user: devops
+  gather_facts: no
+  vars_files:
+  - files/awscreds.yml
+  - files/info.yml
+  tasks:
+  - name: Basic provisioning of sipXcom AMI
+    ec2_ami:
+      aws_access_key: "{{ aws_id }}"
+      aws_secret_key: "{{ aws_key }}"
+      region: "{{ aws_region }}"
+      instance_id: "{{ inst_id }}" 
+      wait: no
+      name: sipXcom_AMI
+      tags:
+        Name: sipXcom_16.02
+        Service: sipXcom_UC_server
+    register: instance
+  - name: Print the results
+    debug: var=instance
+        
